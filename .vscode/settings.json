@@ -1,0 +1,11 @@
+{
+  "deno.enable": true,
+  "deno.lint": true,
+  "deno.unstable": true,
+  "deno.import_intellisense_origins": {
+    "https://deno.land": false
+  },
+  "cSpell.words": [
+    "Taskio"
+  ]
+}
