@@ -1,8 +1,11 @@
 // deno-lint-ignore-file no-explicit-any
 import { EventEmitter, nanoid, validate } from "./deps.ts";
 import { ID, Options, Timestamps } from "./types.ts";
+import { Taskio } from "./index.ts";
+import { nextDate } from "./helpers.ts";
 
 export class Task extends EventEmitter {
+  taskio: Taskio;
   id: ID;
   name: string;
   data: any;
@@ -12,8 +15,9 @@ export class Task extends EventEmitter {
   timestamps: Timestamps;
   stacktrace: Array<string> = [];
 
-  constructor(name: string, data?: any, options?: Options) {
+  constructor(taskio: Taskio, name: string, data?: any, options?: Options) {
     super();
+    this.taskio = taskio;
     this.id = nanoid(15);
     this.name = name;
     this.data = data || {};
@@ -21,6 +25,7 @@ export class Task extends EventEmitter {
     this.options = {
       repeat: false,
       retries: 0,
+      immediate: true,
       ...options,
     };
     this.timestamps = { createdAt: new Date() };
@@ -62,5 +67,27 @@ export class Task extends EventEmitter {
 
     this.options.interval = interval;
     return this;
+  }
+
+  skipImmediate(): Task {
+    this.options.immediate = false;
+    return this;
+  }
+
+  save(): Promise<Task> {
+    if (!this.options.interval) {
+      return Promise.reject(
+        "You can't save a task with the interval undefined",
+      );
+    }
+
+    this.nextRunAt = this.options.immediate
+      ? new Date()
+      : nextDate(this.options.interval);
+
+    this.taskio.tasks.set(this.id, this);
+    this.taskio.enqueue(this);
+
+    return Promise.resolve(this);
   }
 }
