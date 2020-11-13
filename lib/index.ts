@@ -1,7 +1,9 @@
 // deno-lint-ignore-file ban-types no-explicit-any
 import { EventEmitter } from "../deps.ts";
 import { ID, Options, SubOptions } from "../types.ts";
+import { PROCESS_INTERVAL, PROCESS_INTERVAL_LIMIT } from "./constants.ts";
 import { Task } from "./task.ts";
+import { nextDate } from "./utils/helpers.ts";
 
 export class Taskio extends EventEmitter {
   // Defining data structures
@@ -10,7 +12,7 @@ export class Taskio extends EventEmitter {
   tasks: Map<ID, Task> = new Map();
 
   // Defining timers
-  interval?: number = undefined;
+  processInterval?: number = undefined;
 
   define(name: string, fn: Function): void {
     // Checking if task name already exists in definitions map
@@ -33,6 +35,69 @@ export class Taskio extends EventEmitter {
     });
     // Inserting task to queue
     this.queue.splice(idx !== -1 ? idx : this.queue.length, 0, task.id);
+  }
+
+  process(): void {
+    // No tasks in the queue to process
+    if (this.queue.length === 0) {
+      this.updateInterval(PROCESS_INTERVAL);
+      return;
+    }
+
+    // Max concurrency reached, no more tasks can be processed at this time
+    // if (this.stats.running >= this.config.maxConcurrency) {
+    //   this.updateInterval(PROCESS_INTERVAL);
+    //   return;
+    // }
+
+    const id = this.queue[0];
+    const task = this.tasks.get(id) as Task;
+
+    const delta = task.delta();
+
+    // We need to idle until the next task
+    if (delta > 0) {
+      this.updateInterval(delta);
+      return;
+    }
+
+    // Pop task from the queue
+    this.queue = this.queue.slice(1, this.queue.length);
+    // Get task function from the definitions map
+    const taskFunction = this.definitions.get(task.name) as Function;
+    // Update task attributes
+    task.timestamps.startedAt = new Date();
+
+    // Start running the task
+    taskFunction(task.data);
+
+    if (task.options.repeat) {
+      task.nextRunAt = nextDate(task.options.interval!);
+      this.enqueue(task);
+    }
+
+    // Check for next task in queue immediately
+    this.updateInterval(0);
+  }
+
+  updateInterval(interval: number): void {
+    // If the interval exceeds the max allowed value, idle for max interval
+    const newInterval = interval > PROCESS_INTERVAL_LIMIT
+      ? PROCESS_INTERVAL_LIMIT
+      : interval;
+    // Update process interval
+    clearInterval(this.processInterval);
+    this.processInterval = setInterval(this.process.bind(this), newInterval);
+  }
+
+  start(): void {
+    if (this.processInterval) return; // Taskio is already running
+    this.processInterval = setInterval(this.process.bind(this), PROCESS_INTERVAL);
+  }
+
+  stop(): void {
+    clearInterval(this.processInterval);
+    this.processInterval = undefined;
   }
 
   create(name: string, data?: any, options?: Options): Task {

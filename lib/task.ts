@@ -90,4 +90,12 @@ export class Task extends EventEmitter {
 
     return Promise.resolve(this);
   }
+
+  delta(): number {
+    // Interval value is not declared yet
+    if (!this.nextRunAt) return -1;
+    // Compute the milliseconds between now and the execution date
+    const now = new Date();
+    return this.nextRunAt.getTime() - now.getTime();
+  }
 }

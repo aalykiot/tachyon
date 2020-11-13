@@ -1,4 +1,4 @@
-// Deno Land
+// Deno Land Modules
 export { default as EventEmitter } from "https://deno.land/x/events/mod.ts";
 
 // Third Party Modules
