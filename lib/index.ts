@@ -1,6 +1,6 @@
 // deno-lint-ignore-file ban-types no-explicit-any
-import { EventEmitter } from "./deps.ts";
-import { ID, Options, SubOptions } from "./types.ts";
+import { EventEmitter } from "../deps.ts";
+import { ID, Options, SubOptions } from "../types.ts";
 import { Task } from "./task.ts";
 
 export class Taskio extends EventEmitter {
