@@ -1,25 +1,29 @@
 // deno-lint-ignore-file no-explicit-any
-import { EventEmitter, v4, validate } from "./deps.ts";
-import { ID, Options } from "./types.ts";
+import { EventEmitter, nanoid, validate } from "./deps.ts";
+import { ID, Options, Timestamps } from "./types.ts";
 
 export class Task extends EventEmitter {
   id: ID;
   name: string;
   data: any;
   options: Options;
-  nextRunAt!: Date;
-  stacktrace: Array<string> = [];
+  nextRunAt?: Date;
   running: boolean;
-  createdAt: Date;
+  timestamps: Timestamps;
+  stacktrace: Array<string> = [];
 
   constructor(name: string, data?: any, options?: Options) {
     super();
-    this.id = v4.generate();
+    this.id = nanoid(15);
     this.name = name;
     this.data = data || {};
-    this.options = { repeat: false, ...options };
     this.running = false;
-    this.createdAt = new Date();
+    this.options = {
+      repeat: false,
+      retries: 0,
+      ...options,
+    };
+    this.timestamps = { createdAt: new Date() };
   }
 
   timeout(timeout: number): Task {

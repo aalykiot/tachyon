@@ -10,7 +10,7 @@ export class Taskio extends EventEmitter {
   tasks: Map<ID, Task> = new Map();
 
   // Defining timers
-  interval: number | undefined = undefined;
+  interval?: number = undefined;
 
   define(name: string, fn: Function): void {
     // Checking if task name already exists in definitions array
