@@ -1,8 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
-import { EventEmitter, nanoid, validate } from "../deps.ts";
-import { ID, Options, Timestamps } from "../types.ts";
-import { Taskio } from "./index.ts";
-import { nextDate } from "./utils/helpers.ts";
+import { EventEmitter, nanoid, validate } from "../../deps.ts";
+import { ID, Options, Timestamps } from "../../types.ts";
+import { Taskio } from "./runtime.ts";
+import { nextDate } from "../helpers.ts";
 
 export class Task extends EventEmitter {
   taskio: Taskio;

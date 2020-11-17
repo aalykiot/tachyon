@@ -1,9 +1,9 @@
 // deno-lint-ignore-file ban-types no-explicit-any
-import { EventEmitter } from "../deps.ts";
-import { ID, Options, SubOptions } from "../types.ts";
-import { PROCESS_INTERVAL, PROCESS_INTERVAL_LIMIT } from "./constants.ts";
+import { EventEmitter } from "../../deps.ts";
+import { ID, Options, SubOptions } from "../../types.ts";
+import { PROCESS_INTERVAL, PROCESS_INTERVAL_LIMIT } from "../constants.ts";
 import { Task } from "./task.ts";
-import { nextDate } from "./utils/helpers.ts";
+import { nextDate } from "../helpers.ts";
 
 export class Taskio extends EventEmitter {
   // Defining data structures

@@ -1,1 +1,1 @@
-export { Taskio } from "./lib/index.ts";
+export { Taskio } from "./lib/core/runtime.ts";

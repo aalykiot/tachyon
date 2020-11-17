@@ -1,4 +1,4 @@
-import { CronosExpression } from "../../deps.ts";
+import { CronosExpression } from "../deps.ts";
 
 export const nextDate = (interval: string | number): Date => {
   // if cron expression use cronosjs
