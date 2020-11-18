@@ -18,3 +18,8 @@ export interface Timestamps {
   startedAt?: Date;
   finishedAt?: Date;
 }
+
+export interface ExContext<T> {
+  id?: number;
+  promise: Promise<T>;
+}

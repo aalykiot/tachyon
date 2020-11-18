@@ -2,8 +2,8 @@
 import { EventEmitter } from "../../deps.ts";
 import { ID, Options, SubOptions } from "../../types.ts";
 import { PROCESS_INTERVAL, PROCESS_INTERVAL_LIMIT } from "../constants.ts";
+import { execute, nextDate } from "../helpers.ts";
 import { Task } from "./task.ts";
-import { nextDate } from "../helpers.ts";
 
 export class Taskio extends EventEmitter {
   // Defining data structures
@@ -63,13 +63,17 @@ export class Taskio extends EventEmitter {
 
     // Pop task from the queue
     this.queue = this.queue.slice(1, this.queue.length);
-    // Get task function from the definitions map
+
     const taskFunction = this.definitions.get(task.name) as Function;
-    // Update task attributes
     task.timestamps.startedAt = new Date();
 
-    // Start running the task
-    taskFunction(task.data);
+    // Execute task in an async manner
+    execute(
+      taskFunction,
+      task.data,
+      task.options.retries || 0,
+      task.options.timeout,
+    );
 
     if (task.options.repeat) {
       task.nextRunAt = nextDate(task.options.interval!);
@@ -92,7 +96,10 @@ export class Taskio extends EventEmitter {
 
   start(): void {
     if (this.processInterval) return; // Taskio is already running
-    this.processInterval = setInterval(this.process.bind(this), PROCESS_INTERVAL);
+    this.processInterval = setInterval(
+      this.process.bind(this),
+      PROCESS_INTERVAL,
+    );
   }
 
   stop(): void {
