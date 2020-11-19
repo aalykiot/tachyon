@@ -5,14 +5,22 @@ import { PROCESS_INTERVAL, PROCESS_INTERVAL_LIMIT } from "../constants.ts";
 import { execute, nextDate } from "../helpers.ts";
 import { Task } from "./task.ts";
 
-export class Taskio extends EventEmitter {
+export class Taskio {
   // Defining data structures
-  queue: Array<ID> = [];
-  definitions: Map<ID, Function> = new Map();
-  tasks: Map<ID, Task> = new Map();
-
+  queue: Array<ID>;
+  definitions: Map<ID, Function>;
+  tasks: Map<ID, Task>;
   // Defining timers
-  processInterval?: number = undefined;
+  processInterval?: number;
+  // Defining event-emitter
+  events: EventEmitter;
+
+  constructor() {
+    this.queue = [];
+    this.definitions = new Map();
+    this.tasks = new Map();
+    this.events = new EventEmitter();
+  }
 
   define(name: string, fn: Function): void {
     // Checking if task name already exists in definitions map

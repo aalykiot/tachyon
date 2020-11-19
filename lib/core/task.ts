@@ -1,10 +1,10 @@
 // deno-lint-ignore-file no-explicit-any
-import { EventEmitter, nanoid, validate } from "../../deps.ts";
+import { nanoid, validate } from "../../deps.ts";
 import { ID, Options, Timestamps } from "../../types.ts";
 import { nextDate } from "../helpers.ts";
 import { Taskio } from "./runtime.ts";
 
-export class Task extends EventEmitter {
+export class Task {
   taskio: Taskio;
   id: ID;
   name: string;
@@ -16,7 +16,6 @@ export class Task extends EventEmitter {
   stacktrace: Array<string> = [];
 
   constructor(taskio: Taskio, name: string, data?: any, options?: Options) {
-    super();
     this.taskio = taskio;
     this.id = nanoid(15);
     this.name = name;
