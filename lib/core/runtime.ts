@@ -2,8 +2,9 @@
 import { EventEmitter } from "../../deps.ts";
 import { Config, ExecOptions, ID, Options, Stats } from "../../types.ts";
 import { PROCESS_INTERVAL, PROCESS_INTERVAL_LIMIT } from "../constants.ts";
-import { execute, nextDate } from "../helpers.ts";
+import { nextDate } from "../helpers.ts";
 import { defaultOptions, Task } from "./task.ts";
+import { execute } from "./ops.ts";
 
 export class Taskio {
   // Defining config
