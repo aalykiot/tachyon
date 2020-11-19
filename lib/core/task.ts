@@ -55,7 +55,7 @@ export class Task {
   }
 
   repeat(repeat?: boolean): Task {
-    this.options.repeat = repeat || false;
+    this.options.repeat = repeat || true;
     return this;
   }
 
