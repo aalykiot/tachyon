@@ -1,11 +1,13 @@
 // deno-lint-ignore-file ban-types no-explicit-any
 import { EventEmitter } from "../../deps.ts";
-import { ID, Options, SubOptions } from "../../types.ts";
+import { ID, Options, SubOptions, Stats, Config } from "../../types.ts";
 import { PROCESS_INTERVAL, PROCESS_INTERVAL_LIMIT } from "../constants.ts";
 import { execute, nextDate } from "../helpers.ts";
 import { Task } from "./task.ts";
 
 export class Taskio {
+  // Defining config
+  config: Config;
   // Defining data structures
   queue: Array<ID>;
   definitions: Map<ID, Function>;
@@ -14,12 +16,20 @@ export class Taskio {
   processInterval?: number;
   // Defining event-emitter
   events: EventEmitter;
+  // Defining stats
+  stats: Stats;
 
   constructor() {
+    this.config = {
+      maxConcurrency: 20,
+    };
     this.queue = [];
     this.definitions = new Map();
     this.tasks = new Map();
     this.events = new EventEmitter();
+    this.stats = {
+      running: 0,
+    };
   }
 
   define(name: string, fn: Function): void {
@@ -53,10 +63,10 @@ export class Taskio {
     }
 
     // Max concurrency reached, no more tasks can be processed at this time
-    // if (this.stats.running >= this.config.maxConcurrency) {
-    //   this.updateInterval(PROCESS_INTERVAL);
-    //   return;
-    // }
+    if (this.stats.running >= this.config.maxConcurrency) {
+      this.updateInterval(PROCESS_INTERVAL);
+      return;
+    }
 
     const id = this.queue[0];
     const task = this.tasks.get(id) as Task;

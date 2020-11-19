@@ -1,5 +1,13 @@
 export type ID = string;
 
+export interface Stats {
+  running: number;
+}
+
+export interface Config {
+  maxConcurrency: number;
+}
+
 export interface Options {
   interval?: string | number;
   repeat?: boolean;
