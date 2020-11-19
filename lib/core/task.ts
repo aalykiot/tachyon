@@ -2,7 +2,7 @@
 import { nanoid, validate } from "../../deps.ts";
 import { ID, Options, Timestamps } from "../../types.ts";
 import { nextDate } from "../helpers.ts";
-import { Taskio } from "./runtime.ts";
+import { Takion } from "./runtime.ts";
 
 export const defaultOptions: Options = {
   interval: null,
@@ -13,7 +13,7 @@ export const defaultOptions: Options = {
 };
 
 export class Task {
-  runtime: Taskio;
+  runtime: Takion;
   id: ID;
   name: string;
   data: any;
@@ -23,7 +23,7 @@ export class Task {
   stacktrace: Array<string> = [];
 
   constructor(
-    runtime: Taskio,
+    runtime: Takion,
     name: string,
     data: any = {},
     options: Options = defaultOptions,

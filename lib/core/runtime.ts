@@ -6,7 +6,7 @@ import { nextDate } from "../helpers.ts";
 import { defaultOptions, Task } from "./task.ts";
 import { execute } from "./ops.ts";
 
-export class Taskio {
+export class Takion {
   // Defining config
   config: Config;
   // Defining data structures
