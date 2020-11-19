@@ -8,26 +8,27 @@ export interface Config {
   maxConcurrency: number;
 }
 
-export interface Options {
-  interval?: string | number;
-  repeat?: boolean;
-  timeout?: number;
-  retries?: number;
-  immediate?: boolean;
+export interface SetupOptions {
+  interval: string | number | null;
+  repeat: boolean;
+  immediate: boolean;
 }
 
-export interface SubOptions {
-  timeout?: number;
-  retries?: number;
+export interface ExecOptions {
+  timeout: number | null;
+  retries: number;
 }
+
+export type Options = SetupOptions & ExecOptions;
 
 export interface Timestamps {
   createdAt: Date;
-  startedAt?: Date;
-  finishedAt?: Date;
+  nextRunAt: Date | null;
+  startedAt: Date | null;
+  finishedAt: Date | null;
 }
 
 export interface ExContext<T> {
-  id?: number;
+  id: number | null;
   promise: Promise<T>;
 }

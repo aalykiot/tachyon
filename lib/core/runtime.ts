@@ -1,9 +1,9 @@
 // deno-lint-ignore-file ban-types no-explicit-any
 import { EventEmitter } from "../../deps.ts";
-import { ID, Options, SubOptions, Stats, Config } from "../../types.ts";
+import { Config, ExecOptions, ID, Options, Stats } from "../../types.ts";
 import { PROCESS_INTERVAL, PROCESS_INTERVAL_LIMIT } from "../constants.ts";
 import { execute, nextDate } from "../helpers.ts";
-import { Task } from "./task.ts";
+import { defaultOptions, Task } from "./task.ts";
 
 export class Taskio {
   // Defining config
@@ -14,10 +14,10 @@ export class Taskio {
   tasks: Map<ID, Task>;
   // Defining timers
   processInterval?: number;
-  // Defining event-emitter
-  events: EventEmitter;
   // Defining stats
   stats: Stats;
+  // Defining event-emitter
+  events: EventEmitter;
 
   constructor() {
     this.config = {
@@ -48,8 +48,8 @@ export class Taskio {
     }
     // Calculating the correct index based on the nextRunAt
     const idx = this.queue.findIndex((id) => {
-      const { nextRunAt } = this.tasks.get(id) as Task;
-      return task.nextRunAt!.getTime() < nextRunAt!.getTime();
+      const { timestamps: { nextRunAt } } = this.tasks.get(id) as Task;
+      return task.timestamps.nextRunAt!.getTime() < nextRunAt!.getTime();
     });
     // Inserting task to queue
     this.queue.splice(idx !== -1 ? idx : this.queue.length, 0, task.id);
@@ -89,12 +89,12 @@ export class Taskio {
     execute(
       taskFunction,
       task.data,
-      task.options.retries || 0,
+      task.options.retries,
       task.options.timeout,
     );
 
     if (task.options.repeat) {
-      task.nextRunAt = nextDate(task.options.interval!);
+      task.timestamps.nextRunAt = nextDate(task.options.interval!);
       this.enqueue(task);
     }
 
@@ -132,8 +132,8 @@ export class Taskio {
     return new Task(this, name, data, options);
   }
 
-  now(name: string, data?: any, options?: SubOptions): Promise<Task> {
-    const task = this.create(name, data, options);
+  now(name: string, data?: any, options?: ExecOptions): Promise<Task> {
+    const task = this.create(name, data, { ...defaultOptions, ...options });
     return task.interval(1).repeat(false).save();
   }
 
@@ -141,9 +141,9 @@ export class Taskio {
     interval: number,
     name: string,
     data?: any,
-    options?: SubOptions,
+    options?: ExecOptions,
   ): Promise<Task> {
-    const task = this.create(name, data, options);
+    const task = this.create(name, data, { ...defaultOptions, ...options });
     return task.interval(interval).repeat().save();
   }
 
@@ -152,9 +152,9 @@ export class Taskio {
     name: string,
     data?: any,
     repeat?: boolean,
-    options?: SubOptions,
+    options?: ExecOptions,
   ): Promise<Task> {
-    const task = this.create(name, data, options);
+    const task = this.create(name, data, { ...defaultOptions, ...options });
     return task.interval(cron).repeat(repeat).skipImmediate().save();
   }
 }

@@ -4,30 +4,42 @@ import { ID, Options, Timestamps } from "../../types.ts";
 import { nextDate } from "../helpers.ts";
 import { Taskio } from "./runtime.ts";
 
+export const defaultOptions: Options = {
+  interval: null,
+  repeat: false,
+  timeout: null,
+  retries: 0,
+  immediate: true,
+};
+
 export class Task {
-  taskio: Taskio;
+  runtime: Taskio;
   id: ID;
   name: string;
   data: any;
   options: Options;
-  nextRunAt?: Date;
   running: boolean;
   timestamps: Timestamps;
   stacktrace: Array<string> = [];
 
-  constructor(taskio: Taskio, name: string, data?: any, options?: Options) {
-    this.taskio = taskio;
+  constructor(
+    runtime: Taskio,
+    name: string,
+    data: any = {},
+    options: Options = defaultOptions,
+  ) {
+    this.runtime = runtime;
     this.id = nanoid(15);
     this.name = name;
-    this.data = data || {};
+    this.data = data;
     this.running = false;
-    this.options = {
-      repeat: false,
-      retries: 0,
-      immediate: true,
-      ...options,
+    this.options = options;
+    this.timestamps = {
+      createdAt: new Date(),
+      nextRunAt: null,
+      startedAt: null,
+      finishedAt: null,
     };
-    this.timestamps = { createdAt: new Date() };
   }
 
   timeout(timeout: number): Task {
@@ -80,21 +92,21 @@ export class Task {
       );
     }
 
-    this.nextRunAt = this.options.immediate
+    this.timestamps.nextRunAt = this.options.immediate
       ? new Date()
       : nextDate(this.options.interval);
 
-    this.taskio.tasks.set(this.id, this);
-    this.taskio.enqueue(this);
+    this.runtime.tasks.set(this.id, this);
+    this.runtime.enqueue(this);
 
     return Promise.resolve(this);
   }
 
   delta(): number {
     // Interval value is not declared yet
-    if (!this.nextRunAt) return -1;
+    if (!this.timestamps.nextRunAt) return -1;
     // Compute the milliseconds between now and the execution date
     const now = new Date();
-    return this.nextRunAt.getTime() - now.getTime();
+    return this.timestamps.nextRunAt.getTime() - now.getTime();
   }
 }
