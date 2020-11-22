@@ -134,8 +134,10 @@ export class Takion {
   }
 
   now(name: string, data?: any, options?: ExecOptions): Promise<Task> {
-    const task = this.create(name, data, { ...defaultOptions, ...options });
-    return task.interval(1).repeat(false).save();
+    return this.create(name, data, { ...defaultOptions, ...options })
+      .interval(1)
+      .repeat(false)
+      .save();
   }
 
   every(
@@ -144,8 +146,10 @@ export class Takion {
     data?: any,
     options?: ExecOptions,
   ): Promise<Task> {
-    const task = this.create(name, data, { ...defaultOptions, ...options });
-    return task.interval(interval).repeat().save();
+    return this.create(name, data, { ...defaultOptions, ...options })
+      .interval(interval)
+      .repeat()
+      .save();
   }
 
   schedule(
@@ -155,7 +159,10 @@ export class Takion {
     repeat?: boolean,
     options?: ExecOptions,
   ): Promise<Task> {
-    const task = this.create(name, data, { ...defaultOptions, ...options });
-    return task.interval(cron).repeat(repeat).skipImmediate().save();
+    return this.create(name, data, { ...defaultOptions, ...options })
+      .interval(cron)
+      .repeat(repeat)
+      .skipImmediate()
+      .save();
   }
 }
