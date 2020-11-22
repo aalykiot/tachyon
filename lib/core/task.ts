@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { nanoid, validate } from "../../deps.ts";
-import { ID, Options, Timestamps } from "../../types.ts";
+import { ID, Options, Stacktrace, Timestamps } from "../../types.ts";
 import { nextDate } from "../helpers.ts";
 import { Takion } from "./runtime.ts";
 
@@ -20,7 +20,7 @@ export class Task {
   options: Options;
   running: boolean;
   timestamps: Timestamps;
-  stacktrace: Array<string> = [];
+  stacktraces: Array<Stacktrace> = [];
 
   constructor(
     runtime: Takion,
@@ -55,7 +55,7 @@ export class Task {
   }
 
   repeat(repeat?: boolean): Task {
-    this.options.repeat = repeat || true;
+    this.options.repeat = repeat ?? true;
     return this;
   }
 
@@ -86,7 +86,8 @@ export class Task {
   }
 
   save(): Promise<Task> {
-    if (!this.options.interval) {
+    // This `if` is not that great but for now it'll work
+    if (!this.options.interval && this.options.interval !== 0) {
       return Promise.reject(
         "You can't save a task with the interval undefined",
       );

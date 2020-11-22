@@ -6,6 +6,10 @@ import { nextDate } from "../helpers.ts";
 import { defaultOptions, Task } from "./task.ts";
 import { execute } from "./ops.ts";
 
+const defaultConfig: Config = {
+  maxConcurrency: 20,
+};
+
 export class Takion {
   // Defining config
   config: Config;
@@ -20,9 +24,10 @@ export class Takion {
   // Defining event-emitter
   events: EventEmitter;
 
-  constructor() {
+  constructor(config?: Config) {
     this.config = {
-      maxConcurrency: 20,
+      ...defaultConfig,
+      ...config,
     };
     this.queue = [];
     this.definitions = new Map();
@@ -83,17 +88,48 @@ export class Takion {
     // Pop task from the queue
     this.queue = this.queue.slice(1, this.queue.length);
 
+    // Get function from the definitions
     const taskFunction = this.definitions.get(task.name) as Function;
     task.timestamps.startedAt = new Date();
 
-    // Execute task in an async manner
-    execute(
+    // Notify runtime that a new task is starting
+    this.stats.running += 1;
+
+    // Emit `starting` events for listeners
+    this.events.emit("start", task);
+    this.events.emit(`start:${task.name}`, task);
+
+    // Execute task as an async function
+    const ctx = execute(
       taskFunction,
       task.data,
       task.options.retries,
       task.options.timeout,
     );
 
+    // Handle context's success, fail and default cases
+    ctx.then((result) => {
+      // Emit the `success` events for listeners
+      this.events.emit("success", task, result);
+      this.events.emit(`success:${task.name}`, task, result);
+    }).catch((err) => {
+      // Write error to task as a stacktrace
+      task.stacktraces.push({
+        timestamp: new Date(),
+        error: err?.message || err,
+      });
+      // Emit the `failure` events for listeners
+      this.events.emit("fail", task, err);
+      this.events.emit(`fail:${task.name}`, task, err);
+    }).finally(() => {
+      // Emit the `completed` events for listeners
+      this.events.emit("complete", task);
+      this.events.emit(`complete:${task.name}`, task);
+      // Notify runtime that the task is finished
+      this.stats.running -= 1;
+    });
+
+    // If the task is repeatable add it to queue again
     if (task.options.repeat) {
       task.timestamps.nextRunAt = nextDate(task.options.interval!);
       this.enqueue(task);
@@ -114,7 +150,7 @@ export class Takion {
   }
 
   start(): void {
-    if (this.processInterval) return; // Taskio is already running
+    if (this.processInterval) return; // Runtime already started
     this.processInterval = setInterval(
       this.process.bind(this),
       PROCESS_INTERVAL,
@@ -126,6 +162,7 @@ export class Takion {
     this.processInterval = undefined;
   }
 
+  // Create a `raw` task for further manipulation
   create(name: string, data?: any, options?: Options): Task {
     if (!this.definitions.has(name)) {
       throw Error(`Task "${name}" is not yet defined`);
@@ -133,13 +170,15 @@ export class Takion {
     return new Task(this, name, data, options);
   }
 
+  // Create a task that runs as soon as possible
   now(name: string, data?: any, options?: ExecOptions): Promise<Task> {
     return this.create(name, data, { ...defaultOptions, ...options })
-      .interval(1)
+      .interval(0)
       .repeat(false)
       .save();
   }
 
+  // Create a repeated task
   every(
     interval: number,
     name: string,
@@ -152,6 +191,7 @@ export class Takion {
       .save();
   }
 
+  // Create a task that runs based on a cron schedule
   schedule(
     cron: string,
     name: string,

@@ -32,3 +32,8 @@ export interface ExContext<T> {
   id: number | null;
   promise: Promise<T>;
 }
+
+export interface Stacktrace {
+  timestamp: Date;
+  error: string;
+}
