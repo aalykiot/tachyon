@@ -86,7 +86,7 @@ export class Task {
   }
 
   save(): Promise<Task> {
-    // This `if` is not that great but for now it'll work
+    // this `if` is not that great but for now it'll work
     if (!this.options.interval && this.options.interval !== 0) {
       return Promise.reject(
         "You can't save a task with the interval undefined",
@@ -104,9 +104,9 @@ export class Task {
   }
 
   delta(): number {
-    // Interval value is not declared yet
+    // interval value is not declared yet
     if (!this.timestamps.nextRunAt) return -1;
-    // Compute the milliseconds between now and the execution date
+    // compute the milliseconds between now and the execution date
     const now = new Date();
     return this.timestamps.nextRunAt.getTime() - now.getTime();
   }

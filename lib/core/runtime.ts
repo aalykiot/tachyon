@@ -11,17 +11,17 @@ const defaultConfig: Config = {
 };
 
 export class Takion {
-  // Defining config
+  // defining config
   config: Config;
-  // Defining data structures
+  // defining data structures
   queue: Array<ID>;
   definitions: Map<ID, Function>;
   tasks: Map<ID, Task>;
-  // Defining timers
+  // defining timers
   processInterval?: number;
-  // Defining stats
+  // defining stats
   stats: Stats;
-  // Defining event-emitter
+  // defining event-emitter
   events: EventEmitter;
 
   constructor(config?: Config) {
@@ -39,7 +39,7 @@ export class Takion {
   }
 
   define(name: string, fn: Function): void {
-    // Checking if task name already exists in definitions map
+    // checking if task name already exists in definitions map
     if (this.definitions.has(name)) {
       throw Error("Name already exists on definition table");
     }
@@ -47,28 +47,28 @@ export class Takion {
   }
 
   enqueue(task: Task): void {
-    // Pushing task to queue if the queue is empty
+    // pushing task to queue if the queue is empty
     if (this.queue.length === 0) {
       this.queue.push(task.id);
       return;
     }
-    // Calculating the correct index based on the nextRunAt
+    // calculating the correct index based on the nextRunAt
     const idx = this.queue.findIndex((id) => {
       const { timestamps: { nextRunAt } } = this.tasks.get(id) as Task;
       return task.timestamps.nextRunAt!.getTime() < nextRunAt!.getTime();
     });
-    // Inserting task to queue
+    // inserting task to queue
     this.queue.splice(idx !== -1 ? idx : this.queue.length, 0, task.id);
   }
 
   process(): void {
-    // No tasks in the queue to process
+    // no tasks in the queue to process
     if (this.queue.length === 0) {
       this.updateInterval(PROCESS_INTERVAL);
       return;
     }
 
-    // Max concurrency reached, no more tasks can be processed at this time
+    // max concurrency reached, no more tasks can be processed at this time
     if (this.stats.running >= this.config.maxConcurrency) {
       this.updateInterval(PROCESS_INTERVAL);
       return;
@@ -79,78 +79,80 @@ export class Takion {
 
     const delta = task.delta();
 
-    // We need to idle until the next task
+    // we need to idle until the next task
     if (delta > 0) {
       this.updateInterval(delta);
       return;
     }
 
-    // Pop task from the queue
+    // pop task from the queue
     this.queue = this.queue.slice(1, this.queue.length);
 
-    // Get function from the definitions
+    // get function from the definitions
     const taskFunction = this.definitions.get(task.name) as Function;
+
+    // pre-flight checks
+    task.running = true;
     task.timestamps.startedAt = new Date();
 
-    // Notify runtime that a new task is starting
     this.stats.running += 1;
-
-    // Emit `starting` events for listeners
     this.events.emit("start", task);
     this.events.emit(`start:${task.name}`, task);
 
-    // Execute task as an async function
-    const ctx = execute(
-      taskFunction,
-      task.data,
-      task.options.retries,
-      task.options.timeout,
-    );
+    (async () => {
+      try {
+        const result = await execute(
+          taskFunction,
+          task.data,
+          task.options.retries,
+          task.options.timeout,
+        );
+        // emit `success` events
+        this.events.emit("success", task, result);
+        this.events.emit(`success:${task.name}`, task, result);
+      } catch (err) {
+        // write error stacktrace to task
+        task.stacktraces.push({
+          timestamp: new Date(),
+          error: err?.message || err,
+        });
+        // emit `failure` events
+        this.events.emit("fail", task, err);
+        this.events.emit(`fail:${task.name}`, task, err);
+      } finally {
+        // post-flight checks
+        task.running = false;
+        task.timestamps.finishedAt = new Date();
+        // emit `completed` events
+        this.events.emit("complete", task);
+        this.events.emit(`complete:${task.name}`, task);
 
-    // Handle context's success, fail and default cases
-    ctx.then((result) => {
-      // Emit the `success` events for listeners
-      this.events.emit("success", task, result);
-      this.events.emit(`success:${task.name}`, task, result);
-    }).catch((err) => {
-      // Write error to task as a stacktrace
-      task.stacktraces.push({
-        timestamp: new Date(),
-        error: err?.message || err,
-      });
-      // Emit the `failure` events for listeners
-      this.events.emit("fail", task, err);
-      this.events.emit(`fail:${task.name}`, task, err);
-    }).finally(() => {
-      // Emit the `completed` events for listeners
-      this.events.emit("complete", task);
-      this.events.emit(`complete:${task.name}`, task);
-      // Notify runtime that the task is finished
-      this.stats.running -= 1;
-    });
+        this.stats.running -= 1;
+      }
+    })();
 
-    // If the task is repeatable add it to queue again
+    // if the task is repeatable add it to queue again
     if (task.options.repeat) {
       task.timestamps.nextRunAt = nextDate(task.options.interval!);
       this.enqueue(task);
     }
 
-    // Check for next task in queue immediately
+    // check for next task in queue immediately
     this.updateInterval(0);
   }
 
   updateInterval(interval: number): void {
-    // If the interval exceeds the max allowed value, idle for max interval
+    // if the interval exceeds the max allowed value, idle for max interval
     const newInterval = interval > PROCESS_INTERVAL_LIMIT
       ? PROCESS_INTERVAL_LIMIT
       : interval;
-    // Update process interval
+    // update process interval
     clearInterval(this.processInterval);
     this.processInterval = setInterval(this.process.bind(this), newInterval);
   }
 
   start(): void {
-    if (this.processInterval) return; // Runtime already started
+    if (this.processInterval) return; // runtime already started
     this.processInterval = setInterval(
       this.process.bind(this),
       PROCESS_INTERVAL,
@@ -162,7 +164,7 @@ export class Takion {
     this.processInterval = undefined;
   }
 
-  // Create a `raw` task for further manipulation
+  // create a `raw` task
   create(name: string, data?: any, options?: Options): Task {
     if (!this.definitions.has(name)) {
       throw Error(`Task "${name}" is not yet defined`);
@@ -170,7 +172,7 @@ export class Takion {
     return new Task(this, name, data, options);
   }
 
-  // Create a task that runs as soon as possible
+  // create a task that runs as soon as possible
   now(name: string, data?: any, options?: ExecOptions): Promise<Task> {
     return this.create(name, data, { ...defaultOptions, ...options })
       .interval(0)
@@ -178,7 +180,7 @@ export class Takion {
       .save();
   }
 
-  // Create a repeated task
+  // create a repeated task
   every(
     interval: number,
     name: string,
@@ -191,7 +193,7 @@ export class Takion {
       .save();
   }
 
-  // Create a task that runs based on a cron schedule
+  // create a task that runs based on a cron schedule
   schedule(
     cron: string,
     name: string,
