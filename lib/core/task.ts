@@ -1,13 +1,12 @@
-// deno-lint-ignore-file no-explicit-any
+// deno-lint-ignore-file
 import { nanoid, validate } from "../../deps.ts";
-import { ID, Options, Stacktrace, Timestamps } from "../../types.ts";
+import { Data, ID, Options, TaskStats } from "../../types.ts";
 import { nextDate } from "../helpers.ts";
 import { Takion } from "./runtime.ts";
 
 export const defaultOptions: Options = {
-  interval: null,
+  interval: 0,
   repeat: false,
-  timeout: null,
   retries: 0,
   immediate: true,
 };
@@ -16,11 +15,10 @@ export class Task {
   runtime: Takion;
   id: ID;
   name: string;
-  data: any;
+  nextRunAt?: Date;
+  data: Data;
   options: Options;
-  running: boolean;
-  timestamps: Timestamps;
-  stacktraces: Array<Stacktrace> = [];
+  stats: TaskStats;
 
   constructor(
     runtime: Takion,
@@ -31,15 +29,12 @@ export class Task {
     this.runtime = runtime;
     this.id = nanoid(15);
     this.name = name;
-    this.data = data;
-    this.running = false;
     this.options = options;
-    this.timestamps = {
-      createdAt: new Date(),
-      nextRunAt: null,
-      startedAt: null,
-      finishedAt: null,
-    };
+    this.data = data,
+      this.stats = {
+        running: false,
+        stacktrace: [],
+      };
   }
 
   timeout(timeout: number): Task {
@@ -93,7 +88,7 @@ export class Task {
       );
     }
 
-    this.timestamps.nextRunAt = this.options.immediate
+    this.nextRunAt = this.options.immediate
       ? new Date()
       : nextDate(this.options.interval);
 
@@ -105,9 +100,9 @@ export class Task {
 
   delta(): number {
     // interval value is not declared yet
-    if (!this.timestamps.nextRunAt) return -1;
+    if (!this.nextRunAt) return -1;
     // compute the milliseconds between now and the execution date
     const now = new Date();
-    return this.timestamps.nextRunAt.getTime() - now.getTime();
+    return this.nextRunAt.getTime() - now.getTime();
   }
 }

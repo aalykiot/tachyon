@@ -1,7 +1,7 @@
 export type ID = string;
 
 export interface Stats {
-  running: number;
+  concurrent: number;
 }
 
 export interface Config {
@@ -9,31 +9,38 @@ export interface Config {
 }
 
 export interface SetupOptions {
-  interval: string | number | null;
-  repeat: boolean;
-  immediate: boolean;
+  interval?: string | number;
+  repeat?: boolean;
+  immediate?: boolean;
 }
 
 export interface ExecOptions {
-  timeout: number | null;
-  retries: number;
+  timeout?: number;
+  retries?: number;
 }
 
 export type Options = SetupOptions & ExecOptions;
 
-export interface Timestamps {
-  createdAt: Date;
-  nextRunAt: Date | null;
-  startedAt: Date | null;
-  finishedAt: Date | null;
-}
-
-export interface ExContext<T> {
-  id: number | null;
-  promise: Promise<T>;
-}
-
 export interface Stacktrace {
   timestamp: Date;
   error: string;
+}
+
+export interface TaskStats {
+  running: boolean;
+  createdAt?: Date;
+  startedAt?: Date;
+  finishedAt?: Date;
+  stacktrace: Array<Stacktrace>;
+}
+
+export interface TaskData {
+  data: Record<string, unknown>;
+}
+
+export type Data = Record<string, unknown>;
+
+export interface ExContext<T> {
+  id?: number;
+  promise: Promise<T>;
 }

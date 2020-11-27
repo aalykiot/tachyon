@@ -1,6 +1,6 @@
-// deno-lint-ignore-file ban-types no-explicit-any
+// deno-lint-ignore-file ban-types
 import { EventEmitter } from "../../deps.ts";
-import { Config, ExecOptions, ID, Options, Stats } from "../../types.ts";
+import { Config, Data, ExecOptions, ID, Options, Stats } from "../../types.ts";
 import { PROCESS_INTERVAL, PROCESS_INTERVAL_LIMIT } from "../constants.ts";
 import { nextDate } from "../helpers.ts";
 import { defaultOptions, Task } from "./task.ts";
@@ -34,7 +34,7 @@ export class Takion {
     this.tasks = new Map();
     this.events = new EventEmitter();
     this.stats = {
-      running: 0,
+      concurrent: 0,
     };
   }
 
@@ -54,8 +54,8 @@ export class Takion {
     }
     // calculating the correct index based on the nextRunAt
     const idx = this.queue.findIndex((id) => {
-      const { timestamps: { nextRunAt } } = this.tasks.get(id) as Task;
-      return task.timestamps.nextRunAt!.getTime() < nextRunAt!.getTime();
+      const { nextRunAt } = this.tasks.get(id) as Task;
+      return task.nextRunAt!.getTime() < nextRunAt!.getTime();
     });
     // inserting task to queue
     this.queue.splice(idx !== -1 ? idx : this.queue.length, 0, task.id);
@@ -69,7 +69,7 @@ export class Takion {
     }
 
     // max concurrency reached, no more tasks can be processed at this time
-    if (this.stats.running >= this.config.maxConcurrency) {
+    if (this.stats.concurrent >= this.config.maxConcurrency) {
       this.updateInterval(PROCESS_INTERVAL);
       return;
     }
@@ -92,10 +92,10 @@ export class Takion {
     const taskFunction = this.definitions.get(task.name) as Function;
 
     // pre-flight checks
-    task.running = true;
-    task.timestamps.startedAt = new Date();
+    task.stats.running = true;
+    task.stats.startedAt = new Date();
 
-    this.stats.running += 1;
+    this.stats.concurrent += 1;
     this.events.emit("start", task);
     this.events.emit(`start:${task.name}`, task);
 
@@ -104,15 +104,15 @@ export class Takion {
         const result = await execute(
           taskFunction,
           task.data,
-          task.options.retries,
-          task.options.timeout,
+          task.options.retries!,
+          task.options.timeout!,
         );
         // emit `success` events
         this.events.emit("success", task, result);
         this.events.emit(`success:${task.name}`, task, result);
       } catch (err) {
         // write error stacktrace to task
-        task.stacktraces.push({
+        task.stats.stacktrace.push({
           timestamp: new Date(),
           error: err?.message || err,
         });
@@ -121,19 +121,19 @@ export class Takion {
         this.events.emit(`fail:${task.name}`, task, err);
       } finally {
         // post-flight checks
-        task.running = false;
-        task.timestamps.finishedAt = new Date();
+        task.stats.running = false;
+        task.stats.finishedAt = new Date();
         // emit `completed` events
         this.events.emit("complete", task);
         this.events.emit(`complete:${task.name}`, task);
 
-        this.stats.running -= 1;
+        this.stats.concurrent -= 1;
       }
     })();
 
     // if the task is repeatable add it to queue again
     if (task.options.repeat) {
-      task.timestamps.nextRunAt = nextDate(task.options.interval!);
+      task.nextRunAt = nextDate(task.options.interval!);
       this.enqueue(task);
     }
 
@@ -165,7 +165,7 @@ export class Takion {
   }
 
   // create a `raw` task
-  create(name: string, data?: any, options?: Options): Task {
+  create(name: string, data?: Data, options?: Options): Task {
     if (!this.definitions.has(name)) {
       throw Error(`Task "${name}" is not yet defined`);
     }
@@ -173,7 +173,7 @@ export class Takion {
   }
 
   // create a task that runs as soon as possible
-  now(name: string, data?: any, options?: ExecOptions): Promise<Task> {
+  now(name: string, data?: Data, options?: ExecOptions): Promise<Task> {
     return this.create(name, data, { ...defaultOptions, ...options })
       .interval(0)
       .repeat(false)
@@ -184,7 +184,7 @@ export class Takion {
   every(
     interval: number,
     name: string,
-    data?: any,
+    data?: Data,
     options?: ExecOptions,
   ): Promise<Task> {
     return this.create(name, data, { ...defaultOptions, ...options })
@@ -197,7 +197,7 @@ export class Takion {
   schedule(
     cron: string,
     name: string,
-    data?: any,
+    data?: Data,
     repeat?: boolean,
     options?: ExecOptions,
   ): Promise<Task> {

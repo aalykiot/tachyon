@@ -5,7 +5,7 @@ const promiseWithTimeout = (
   fn: Function,
   ms: number,
 ): ExContext<any> => {
-  let id = null;
+  let id = undefined;
   const timeout = new Promise((resolve, reject) => {
     id = setTimeout(resolve, ms);
   });
@@ -21,7 +21,7 @@ const promiseWithTimeout = (
 };
 
 const _promise = (fn: Function): ExContext<any> => ({
-  id: null,
+  id: undefined,
   promise: Promise.resolve(fn()),
 });
 
@@ -45,7 +45,7 @@ const retry = (
           .then(resolve)
           .catch(reject);
       })
-      .finally(() => clearTimeout(id || undefined));
+      .finally(() => clearTimeout(id));
   });
 
 export const execute = async (
