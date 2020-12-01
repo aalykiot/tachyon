@@ -48,12 +48,12 @@ const retry = (
       .finally(() => clearTimeout(id));
   });
 
-export const execute = async (
+export const execute = (
   fn: Function,
   data: Data,
   retries: number,
   timeout: number | null,
 ): Promise<any> => {
-  const wrapper = async () => fn(data);
+  const wrapper = async () => await fn(data);
   return retry(wrapper, retries, timeout);
 };
