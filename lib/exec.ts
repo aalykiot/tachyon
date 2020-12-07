@@ -1,5 +1,5 @@
 // deno-lint-ignore-file ban-types no-explicit-any
-import { ExContext, Data } from "../../types.ts";
+import { ExContext } from "./index.d.ts";
 
 const promiseWithTimeout = (
   fn: Function,
@@ -50,10 +50,11 @@ const retry = (
 
 export const execute = (
   fn: Function,
-  data: Data,
+  data: any,
   retries: number,
-  timeout: number | null,
+  timeout: number,
 ): Promise<any> => {
   const wrapper = async () => await fn(data);
-  return retry(wrapper, retries, timeout);
+  const tm = timeout < 0 ? null : timeout;
+  return retry(wrapper, retries, tm);
 };

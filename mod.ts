@@ -1,1 +1,1 @@
-export { Takion } from "./lib/core/runtime.ts";
+export { Takion } from "./lib/runtime.ts";

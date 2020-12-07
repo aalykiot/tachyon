@@ -1,22 +1,28 @@
-// deno-lint-ignore-file
-import { nanoid, validate } from "../../deps.ts";
-import { Data, ID, Options, TaskStats } from "../../types.ts";
-import { nextDate } from "../helpers.ts";
+// deno-lint-ignore-file no-explicit-any
+import { nanoid, R, validate } from "../deps.ts";
 import { Takion } from "./runtime.ts";
+import { ID, Options, TaskStats } from "./index.d.ts";
+import { nextDate } from "./utils/helpers.ts";
 
-export const defaultOptions: Options = {
+const defaultOptions: Options = {
   interval: 0,
   repeat: false,
-  retries: 0,
   immediate: true,
+  timeout: -1,
+  retries: 0,
+};
+
+const initStats = {
+  running: false,
+  stacktrace: [],
 };
 
 export class Task {
   runtime: Takion;
   id: ID;
   name: string;
-  nextRunAt?: Date;
-  data: Data;
+  nextRunAt: Date | null;
+  data: any;
   options: Options;
   stats: TaskStats;
 
@@ -24,28 +30,24 @@ export class Task {
     runtime: Takion,
     name: string,
     data: any = {},
-    options: Options = defaultOptions,
+    options: any = {},
   ) {
     this.runtime = runtime;
     this.id = nanoid(15);
     this.name = name;
-    this.options = options;
-    this.data = data,
-      this.stats = {
-        running: false,
-        stacktrace: [],
-      };
+    this.nextRunAt = null;
+    this.options = R.mergeDeepRight(defaultOptions, options);
+    this.data = data;
+    this.stats = initStats;
   }
 
   timeout(timeout: number): Task {
-    if (timeout < 0) throw Error("Timeout must be a positive integer.");
-    this.options.timeout = timeout;
+    this.options.timeout = timeout < 0 ? 0 : timeout;
     return this;
   }
 
   retries(retries: number): Task {
-    if (retries < 0) throw Error("Retries must be a positive integer.");
-    this.options.retries = retries;
+    this.options.retries = retries < 0 ? 0 : retries;
     return this;
   }
 
@@ -63,19 +65,16 @@ export class Task {
       if (!cronExpressionValid) {
         throw new Error(`Cron expression provided "${interval}" is not valid`);
       }
+
       this.options.interval = interval;
       return this;
     }
 
-    if (interval < 0) {
-      throw new Error("Interval must be a positive number");
-    }
-
-    this.options.interval = interval;
+    this.options.interval = interval < 0 ? 1 : interval;
     return this;
   }
 
-  skipImmediate(): Task {
+  skipImmediate() {
     this.options.immediate = false;
     return this;
   }
