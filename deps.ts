@@ -1,5 +1,6 @@
 // deno land modules
 export { default as EventEmitter } from "https://deno.land/x/events/mod.ts";
+export { MongoClient } from "https://deno.land/x/mongo@v0.20.0/mod.ts";
 
 // third party modules
 export { nanoid } from "https://jspm.dev/nanoid";

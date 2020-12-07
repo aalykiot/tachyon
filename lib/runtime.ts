@@ -1,6 +1,6 @@
 // deno-lint-ignore-file ban-types no-explicit-any
 import { Config, ID, Stats } from "./index.d.ts";
-import { EventEmitter, R } from "../deps.ts";
+import { EventEmitter, R, MongoClient } from "../deps.ts";
 import { Task } from "./task.ts";
 import { nextDate } from "./utils/helpers.ts";
 import { PROCESS_INTERVAL, PROCESS_INTERVAL_LIMIT } from "./utils/constants.ts";
@@ -8,6 +8,11 @@ import { execute } from "./exec.ts";
 
 const defaultConfig: Config = {
   maxConcurrency: 20,
+  db: {
+    uri: "mongodb://localhost:27017",
+    name: "takion",
+    collection: "_tasks",
+  },
 };
 
 const initStats: Stats = {
@@ -27,14 +32,35 @@ export class Takion {
   stats: Stats;
   // defining event-emitter
   events: EventEmitter;
+  // database collection
+  collection: any;
 
   constructor(config: any = {}) {
+    // runtime setup
     this.config = R.mergeDeepRight(defaultConfig, config);
     this.queue = [];
     this.definitions = new Map();
     this.tasks = new Map();
     this.events = new EventEmitter();
     this.stats = initStats;
+    // connect to database
+    this.connect();
+  }
+
+  async connect(): Promise<void> {
+    try {
+      // connect to mongodb
+      const client = new MongoClient();
+      await client.connect(this.config.db.uri);
+      // get db and collection
+      const db = await client.database(this.config.db.name);
+      const collection = await db.collection(this.config.db.collection);
+      // runtime setup
+      this.collection = collection;
+      this.events.emit('ready');
+    } catch(err) {
+      this.events.emit('conn::error', err);
+    }
   }
 
   define(name: string, fn: Function): void {

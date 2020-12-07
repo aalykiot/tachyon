@@ -4,8 +4,15 @@ export interface Stats {
   concurrent: number;
 }
 
+export interface Database {
+  uri: string;
+  name: string;
+  collection: string;
+}
+
 export interface Config {
   maxConcurrency: number;
+  db: Database;
 }
 
 export interface Options {
