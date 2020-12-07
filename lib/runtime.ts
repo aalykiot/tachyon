@@ -1,6 +1,6 @@
 // deno-lint-ignore-file ban-types no-explicit-any
 import { Config, ID, Stats } from "./index.d.ts";
-import { EventEmitter, R, MongoClient } from "../deps.ts";
+import { EventEmitter, MongoClient, R } from "../deps.ts";
 import { Task } from "./task.ts";
 import { nextDate } from "./utils/helpers.ts";
 import { PROCESS_INTERVAL, PROCESS_INTERVAL_LIMIT } from "./utils/constants.ts";
@@ -43,24 +43,18 @@ export class Takion {
     this.tasks = new Map();
     this.events = new EventEmitter();
     this.stats = initStats;
-    // connect to database
-    this.connect();
   }
 
   async connect(): Promise<void> {
-    try {
-      // connect to mongodb
-      const client = new MongoClient();
-      await client.connect(this.config.db.uri);
-      // get db and collection
-      const db = await client.database(this.config.db.name);
-      const collection = await db.collection(this.config.db.collection);
-      // runtime setup
-      this.collection = collection;
-      this.events.emit('ready');
-    } catch(err) {
-      this.events.emit('conn::error', err);
-    }
+    // connect to mongodb
+    const client = new MongoClient();
+    await client.connect(this.config.db.uri);
+    // get db and collection
+    const db = await client.database(this.config.db.name);
+    const collection = await db.collection(this.config.db.collection);
+    // runtime setup
+    this.collection = collection;
+    this.events.emit("ready");
   }
 
   define(name: string, fn: Function): void {
@@ -148,10 +142,12 @@ export class Takion {
         // post-flight checks
         task.stats.running = false;
         task.stats.finishedAt = new Date();
+        // sync task with database
+        task.sync();
         // emit `completed` events
         this.events.emit("complete", task);
         this.events.emit(`complete:${task.name}`, task);
-
+        // update runtime stats
         this.stats.concurrent -= 1;
       }
     })();
@@ -176,8 +172,12 @@ export class Takion {
     this.processInterval = setInterval(this.process.bind(this), newInterval);
   }
 
-  start(): void {
-    if (this.processInterval) return; // runtime already started
+  async start(): Promise<void> {
+    // runtime already started
+    if (this.processInterval) return;
+    // connect to database
+    await this.connect();
+    // setup new interval
     this.processInterval = setInterval(
       this.process.bind(this),
       PROCESS_INTERVAL,

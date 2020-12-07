@@ -61,15 +61,13 @@ export class Task {
       const cronExpressionValid = validate(interval, {
         strict: false,
       });
-
       if (!cronExpressionValid) {
         throw new Error(`Cron expression provided "${interval}" is not valid`);
       }
-
       this.options.interval = interval;
       return this;
     }
-
+    // interval must not be negative
     this.options.interval = interval < 0 ? 1 : interval;
     return this;
   }
@@ -94,7 +92,21 @@ export class Task {
     this.runtime.tasks.set(this.id, this);
     this.runtime.enqueue(this);
 
+    // sync task with database
+    this.sync();
+
     return Promise.resolve(this);
+  }
+
+  async sync(): Promise<void> {
+    // exclude runtime from database document
+    const { runtime, ...task } = this;
+    // insert or update task
+    await runtime.collection.updateOne(
+      { id: task.id },
+      task,
+      { upsert: true },
+    );
   }
 
   delta(): number {
