@@ -96,7 +96,7 @@ export class Tachyon {
     const id = this.$queue[0];
     const task = this.$tasks.get(id) as Task;
 
-    const delta = task.delta();
+    const delta = task.$delta();
 
     // we need to idle until the next task
     if (delta > 0) {
@@ -143,7 +143,7 @@ export class Tachyon {
         task.stats.running = false;
         task.stats.finishedAt = new Date();
         // sync task with database
-        task.sync();
+        task.$sync();
         // emit `completed` events
         this.events.emit("complete", task);
         this.events.emit(`complete:${task.name}`, task);

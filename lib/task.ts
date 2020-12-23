@@ -93,12 +93,12 @@ export class Task {
     this.runtime.$enqueue(this);
 
     // sync task with database
-    this.sync();
+    this.$sync();
 
     return Promise.resolve(this);
   }
 
-  async sync(): Promise<void> {
+  async $sync(): Promise<void> {
     // exclude runtime from database document
     const { runtime, ...task } = this;
     // insert or update task
@@ -109,7 +109,7 @@ export class Task {
     );
   }
 
-  delta(): number {
+  $delta(): number {
     // interval value is not declared yet
     if (!this.nextRunAt) return -1;
     // compute the milliseconds between now and the execution date
