@@ -1,5 +1,6 @@
 // deno land modules
 export { default as EventEmitter } from "https://deno.land/x/events/mod.ts";
+export { default as hash } from "https://deno.land/x/object_hash@2.0.3.1/mod.ts";
 export { MongoClient } from "https://deno.land/x/mongo@v0.20.0/mod.ts";
 
 // third party modules

@@ -1,6 +1,6 @@
 // deno-lint-ignore-file ban-types no-explicit-any
 import { Config, ID, Stats } from "./index.d.ts";
-import { EventEmitter, MongoClient, mergeDeepRight } from "../deps.ts";
+import { EventEmitter, mergeDeepRight, MongoClient } from "../deps.ts";
 import { Task } from "./task.ts";
 import { nextDate } from "./utils/helpers.ts";
 import { PROCESS_INTERVAL, PROCESS_INTERVAL_LIMIT } from "./utils/constants.ts";
@@ -10,8 +10,8 @@ const defaultConfig: Config = {
   maxConcurrency: 20,
   db: {
     uri: "mongodb://localhost:27017",
-    name: "takion",
-    collection: "_tasks",
+    name: "tachyon",
+    collection: "tachyon_tasks",
   },
 };
 
@@ -71,6 +71,8 @@ export class Tachyon {
       this.$queue.push(task.id);
       return;
     }
+    // remove old tasks with the same id
+    this.$queue = this.$queue.filter((id) => id !== task.id);
     // calculating the correct index based on the nextRunAt
     const idx = this.$queue.findIndex((id) => {
       const { nextRunAt } = this.$tasks.get(id) as Task;

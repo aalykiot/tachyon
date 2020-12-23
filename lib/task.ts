@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { nanoid, mergeDeepRight, validate } from "../deps.ts";
+import { hash, mergeDeepRight, nanoid, validate } from "../deps.ts";
 import { Tachyon } from "./runtime.ts";
 import { ID, Options, TaskStats } from "./index.d.ts";
 import { nextDate } from "./utils/helpers.ts";
@@ -21,6 +21,7 @@ export class Task {
   runtime: Tachyon;
   id: ID;
   name: string;
+  hash: string | null;
   nextRunAt: Date | null;
   data: any;
   options: Options;
@@ -35,6 +36,7 @@ export class Task {
     this.runtime = runtime;
     this.id = nanoid(15);
     this.name = name;
+    this.hash = null;
     this.nextRunAt = null;
     this.options = mergeDeepRight(defaultOptions, options);
     this.data = data;
@@ -85,10 +87,15 @@ export class Task {
       );
     }
 
+    // compute hash
+    this.hash = hash([this.name, this.data, this.options]);
+
+    // compute next-run-at
     this.nextRunAt = this.options.immediate
       ? new Date()
       : nextDate(this.options.interval);
 
+    // subscribe task to runtime
     this.runtime.$tasks.set(this.id, this);
     this.runtime.$enqueue(this);
 
@@ -100,11 +107,11 @@ export class Task {
 
   async $sync(): Promise<void> {
     // exclude runtime from database document
-    const { runtime, ...task } = this;
+    const { runtime, id, ...task } = this;
     // insert or update task
     await runtime.$collection.updateOne(
-      { id: task.id },
-      task,
+      { _id: id },
+      { _id: id, ...task },
       { upsert: true },
     );
   }
