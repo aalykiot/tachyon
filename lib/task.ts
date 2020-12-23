@@ -8,7 +8,7 @@ const defaultOptions: Options = {
   interval: 0,
   repeat: false,
   immediate: true,
-  timeout: -1,
+  timeout: -Infinity,
   retries: 0,
 };
 
