@@ -1,6 +1,6 @@
 // deno-lint-ignore-file ban-types no-explicit-any
 import { Config, ID, Stats } from "./index.d.ts";
-import { EventEmitter, MongoClient, R } from "../deps.ts";
+import { EventEmitter, MongoClient, mergeDeepRight } from "../deps.ts";
 import { Task } from "./task.ts";
 import { nextDate } from "./utils/helpers.ts";
 import { PROCESS_INTERVAL, PROCESS_INTERVAL_LIMIT } from "./utils/constants.ts";
@@ -19,7 +19,7 @@ const initStats: Stats = {
   concurrent: 0,
 };
 
-export class Takion {
+export class Tachyon {
   // defining config
   config: Config;
   // defining data structures
@@ -37,7 +37,7 @@ export class Takion {
 
   constructor(config: any = {}) {
     // runtime setup
-    this.config = R.mergeDeepRight(defaultConfig, config);
+    this.config = mergeDeepRight(defaultConfig, config);
     this.queue = [];
     this.definitions = new Map();
     this.tasks = new Map();

@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
-import { nanoid, R, validate } from "../deps.ts";
-import { Takion } from "./runtime.ts";
+import { nanoid, mergeDeepRight, validate } from "../deps.ts";
+import { Tachyon } from "./runtime.ts";
 import { ID, Options, TaskStats } from "./index.d.ts";
 import { nextDate } from "./utils/helpers.ts";
 
@@ -18,7 +18,7 @@ const initStats = {
 };
 
 export class Task {
-  runtime: Takion;
+  runtime: Tachyon;
   id: ID;
   name: string;
   nextRunAt: Date | null;
@@ -27,7 +27,7 @@ export class Task {
   stats: TaskStats;
 
   constructor(
-    runtime: Takion,
+    runtime: Tachyon,
     name: string,
     data: any = {},
     options: any = {},
@@ -36,7 +36,7 @@ export class Task {
     this.id = nanoid(15);
     this.name = name;
     this.nextRunAt = null;
-    this.options = R.mergeDeepRight(defaultOptions, options);
+    this.options = mergeDeepRight(defaultOptions, options);
     this.data = data;
     this.stats = initStats;
   }

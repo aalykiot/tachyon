@@ -1,1 +1,1 @@
-export { Takion } from "./lib/runtime.ts";
+export { Tachyon } from "./lib/runtime.ts";
