@@ -90,6 +90,12 @@ export class Task {
     // compute hash
     this.hash = hash([this.name, this.data, this.options]);
 
+    // check if task signature is already subscribed
+    const record = [...this.runtime.$tasks].find(([_, task]) => task.hash === this.hash);
+    if (record) {
+      return Promise.resolve(record[1]); // record[1] corresponds to a task instance
+    }
+
     // compute next-run-at
     this.nextRunAt = this.options.immediate
       ? new Date()
