@@ -89,8 +89,8 @@ export class Task {
       ? new Date()
       : nextDate(this.options.interval);
 
-    this.runtime.tasks.set(this.id, this);
-    this.runtime.enqueue(this);
+    this.runtime.$tasks.set(this.id, this);
+    this.runtime.$enqueue(this);
 
     // sync task with database
     this.sync();
@@ -102,7 +102,7 @@ export class Task {
     // exclude runtime from database document
     const { runtime, ...task } = this;
     // insert or update task
-    await runtime.collection.updateOne(
+    await runtime.$collection.updateOne(
       { id: task.id },
       task,
       { upsert: true },

@@ -21,94 +21,94 @@ const initStats: Stats = {
 
 export class Tachyon {
   // defining config
-  config: Config;
+  $config: Config;
   // defining data structures
-  queue: Array<ID>;
-  definitions: Map<ID, Function>;
-  tasks: Map<ID, Task>;
+  $queue: Array<ID>;
+  $definitions: Map<ID, Function>;
+  $tasks: Map<ID, Task>;
   // defining timers
-  processInterval?: number;
+  $processInterval?: number;
+  // database collection
+  $collection: any;
   // defining stats
   stats: Stats;
   // defining event-emitter
   events: EventEmitter;
-  // database collection
-  collection: any;
 
   constructor(config: any = {}) {
     // runtime setup
-    this.config = mergeDeepRight(defaultConfig, config);
-    this.queue = [];
-    this.definitions = new Map();
-    this.tasks = new Map();
+    this.$config = mergeDeepRight(defaultConfig, config);
+    this.$queue = [];
+    this.$definitions = new Map();
+    this.$tasks = new Map();
     this.events = new EventEmitter();
     this.stats = initStats;
   }
 
-  async connect(): Promise<void> {
+  async $connect(): Promise<void> {
     // connect to mongodb
     const client = new MongoClient();
-    await client.connect(this.config.db.uri);
+    await client.connect(this.$config.db.uri);
     // get db and collection
-    const db = await client.database(this.config.db.name);
-    const collection = await db.collection(this.config.db.collection);
+    const db = await client.database(this.$config.db.name);
+    const collection = await db.collection(this.$config.db.collection);
     // runtime setup
-    this.collection = collection;
+    this.$collection = collection;
     this.events.emit("ready");
   }
 
   define(name: string, fn: Function): void {
     // checking if task name already exists in definitions map
-    if (this.definitions.has(name)) {
+    if (this.$definitions.has(name)) {
       throw Error("Name already exists on definition table");
     }
-    this.definitions.set(name, fn);
+    this.$definitions.set(name, fn);
   }
 
-  enqueue(task: Task): void {
+  $enqueue(task: Task): void {
     // pushing task to queue if the queue is empty
-    if (this.queue.length === 0) {
-      this.queue.push(task.id);
+    if (this.$queue.length === 0) {
+      this.$queue.push(task.id);
       return;
     }
     // calculating the correct index based on the nextRunAt
-    const idx = this.queue.findIndex((id) => {
-      const { nextRunAt } = this.tasks.get(id) as Task;
+    const idx = this.$queue.findIndex((id) => {
+      const { nextRunAt } = this.$tasks.get(id) as Task;
       return task.nextRunAt!.getTime() < nextRunAt!.getTime();
     });
     // inserting task to queue
-    this.queue.splice(idx !== -1 ? idx : this.queue.length, 0, task.id);
+    this.$queue.splice(idx !== -1 ? idx : this.$queue.length, 0, task.id);
   }
 
-  process(): void {
+  $process(): void {
     // no tasks in the queue to process
-    if (this.queue.length === 0) {
-      this.updateInterval(PROCESS_INTERVAL);
+    if (this.$queue.length === 0) {
+      this.$updateInterval(PROCESS_INTERVAL);
       return;
     }
 
     // max concurrency reached, no more tasks can be processed at this time
-    if (this.stats.concurrent >= this.config.maxConcurrency) {
-      this.updateInterval(PROCESS_INTERVAL);
+    if (this.stats.concurrent >= this.$config.maxConcurrency) {
+      this.$updateInterval(PROCESS_INTERVAL);
       return;
     }
 
-    const id = this.queue[0];
-    const task = this.tasks.get(id) as Task;
+    const id = this.$queue[0];
+    const task = this.$tasks.get(id) as Task;
 
     const delta = task.delta();
 
     // we need to idle until the next task
     if (delta > 0) {
-      this.updateInterval(delta);
+      this.$updateInterval(delta);
       return;
     }
 
     // pop task from the queue
-    this.queue = this.queue.slice(1, this.queue.length);
+    this.$queue = this.$queue.slice(1, this.$queue.length);
 
     // get function from the definitions
-    const taskFunction = this.definitions.get(task.name) as Function;
+    const taskFunction = this.$definitions.get(task.name) as Function;
 
     // pre-flight checks
     task.stats.running = true;
@@ -155,43 +155,43 @@ export class Tachyon {
     // if the task is repeatable add it to queue again
     if (task.options.repeat) {
       task.nextRunAt = nextDate(task.options.interval!);
-      this.enqueue(task);
+      this.$enqueue(task);
     }
 
     // check for next task in queue immediately
-    this.updateInterval(0);
+    this.$updateInterval(0);
   }
 
-  updateInterval(interval: number): void {
+  $updateInterval(interval: number): void {
     // if the interval exceeds the max allowed value, idle for max interval
     const newInterval = interval > PROCESS_INTERVAL_LIMIT
       ? PROCESS_INTERVAL_LIMIT
       : interval;
     // update process interval
-    clearInterval(this.processInterval);
-    this.processInterval = setInterval(this.process.bind(this), newInterval);
+    clearInterval(this.$processInterval);
+    this.$processInterval = setInterval(this.$process.bind(this), newInterval);
   }
 
   async start(): Promise<void> {
     // runtime already started
-    if (this.processInterval) return;
+    if (this.$processInterval) return;
     // connect to database
-    await this.connect();
+    await this.$connect();
     // setup new interval
-    this.processInterval = setInterval(
-      this.process.bind(this),
+    this.$processInterval = setInterval(
+      this.$process.bind(this),
       PROCESS_INTERVAL,
     );
   }
 
   stop(): void {
-    clearInterval(this.processInterval);
-    this.processInterval = undefined;
+    clearInterval(this.$processInterval);
+    this.$processInterval = undefined;
   }
 
   // create a `raw` task
   create(name: string, data?: any, options?: any): Task {
-    if (!this.definitions.has(name)) {
+    if (!this.$definitions.has(name)) {
       throw Error(`Task "${name}" is not yet defined`);
     }
     return new Task(this, name, data, options);
