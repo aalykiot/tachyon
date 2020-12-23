@@ -158,6 +158,9 @@ export class Tachyon {
     if (task.options.repeat) {
       task.nextRunAt = nextDate(task.options.interval!);
       this.$enqueue(task);
+    } else {
+      // remove task from the lookup table
+      this.$tasks.delete(task.id);
     }
 
     // check for next task in queue immediately
