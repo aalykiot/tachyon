@@ -54,6 +54,21 @@ export class Tachyon {
     const collection = await db.collection(this.$config.db.collection);
     // runtime setup
     this.$collection = collection;
+    // get pre-defined tasks from database
+    const tasks = await this.$collection.find({
+      $or: [
+        { nextRunAt: { $gte: new Date() } },
+        { "options.repeat": true }
+      ]
+    }).toArray();
+    // parse and add tasks to runtime
+    await Promise.all(
+      tasks
+        .filter((t: any) => this.$definitions.has(t.name))
+        .map((t: any) => Task.$from(this, t))
+        .map((task: Task) => task.save())
+    );
+
     this.events.emit("ready");
   }
 

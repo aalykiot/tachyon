@@ -43,6 +43,19 @@ export class Task {
     this.stats = initStats;
   }
 
+  static $from(runtime: Tachyon, rawParts: any): Task {
+    // get raw parts
+    const { _id, name, hash, options, data, stats } = rawParts;
+    // create task instance
+    const task = new Task(runtime, name, data, options);
+    // override default values
+    task.id = _id;
+    task.hash = hash;
+    task.stats = stats;
+    
+    return task;
+  }
+
   timeout(timeout: number): Task {
     this.options.timeout = timeout < 0 ? 0 : timeout;
     return this;
