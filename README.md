@@ -113,8 +113,8 @@ tachyon.stop() // graceful shutdown
 When the runtime will be ready for processing tasks will emit a `ready` event.
 
 ```ts
-tachyon.on('ready', () => {
-  console.log('tachyon runtime is ready now 🖖');
+tachyon.on("ready", () => {
+  console.log("tachyon runtime is ready now 🖖");
 });
 ```
 
@@ -122,7 +122,7 @@ tachyon.on('ready', () => {
 When a task is ready to be executed the runtime will emit the start event with the task instance as a parameter.
 
 ```ts
-tachyon.on('start', (task: Task) => {
+tachyon.on("start", (task: Task) => {
   console.log(`task ${task.name} is about to run...`);
 });
 ```
@@ -131,7 +131,7 @@ tachyon.on('start', (task: Task) => {
 With the generic `start` event that is emitted (for all tasks), the runtime will also emit a `start` event for the specific task.
 
 ```ts
-tachyon.on('start:echo-date', (task: Task) => {
+tachyon.on("start:echo-date", (task: Task) => {
   console.log(`task ${task.name} is about to run...`);
 });
 ```
@@ -140,7 +140,7 @@ tachyon.on('start:echo-date', (task: Task) => {
 When a task is successfully runs the runtime will emit a `success` event with the task instance and the task's result as parameters.
 
 ```ts
-tachyon.on('success', (task: Task, result: any) => {
+tachyon.on("success", (task: Task, result: any) => {
   console.log(`task ${task.name}'s result is ${result}`);
 });
 ```
@@ -149,7 +149,7 @@ tachyon.on('success', (task: Task, result: any) => {
 Following the pattern from the `start` event, the runtime will also emit a specific `success` for task.
 
 ```ts
-tachyon.on('success:fetch-api', (task: Task, result: any) => {
+tachyon.on("success:fetch-api", (task: Task, result: any) => {
   console.log(`API response is ${JSON.parse(result)}`);
 });
 ```
@@ -158,7 +158,7 @@ tachyon.on('success:fetch-api', (task: Task, result: any) => {
 When a task fails the runtime will emit an `fail` event. **(this is the recommended way to handle task errors)**
 
 ```ts
-tachyon.on('fail', (task: Task, err: any) => {
+tachyon.on("fail", (task: Task, err: any) => {
   console.log(`task ${task.name} failed with error: ${err}`);
 });
 ```
@@ -167,7 +167,7 @@ tachyon.on('fail', (task: Task, err: any) => {
 Once again there is also a specific task `fail` event. **(this is the recommended way to handle task errors)**
 
 ```ts
-tachyon.on('fail:fetch-api', (task: Task, result: any) => {
+tachyon.on("fail:fetch-api", (task: Task, result: any) => {
   console.log(`can't fetch API: ${result}`);
 });
 ```
@@ -176,7 +176,7 @@ tachyon.on('fail:fetch-api', (task: Task, result: any) => {
 After a task is run and completes (success / fail) the runtime will emit an `complete` event for clean up purposes.
 
 ```ts
-tachyon.on('complete', (task: Task) => {
+tachyon.on("complete", (task: Task) => {
   console.log(`task ${task.name} completed 😎`);
 });
 ```
@@ -185,7 +185,7 @@ tachyon.on('complete', (task: Task) => {
 It gets boring now but the runtime will also emit an `complete` event for targeted events. 
 
 ```ts
-tachyon.on('complete:fetch-api', (task: Task) => {
+tachyon.on("complete:fetch-api", (task: Task) => {
   console.log(`task ${task.name} completed 😎`);
 });
 ```
