@@ -117,7 +117,7 @@ tachyon.on("ready", () => {
 ```
 
 ### start
-When a task is ready to be executed the runtime will emit the start event with the task instance as a parameter.
+When a task is ready to be processed the runtime will emit the `start` event with the task instance as a parameter.
 
 ```ts
 tachyon.on("start", (task: Task) => {
@@ -126,7 +126,7 @@ tachyon.on("start", (task: Task) => {
 ```
 
 ### start:[task]
-With the generic `start` event that is emitted (for all tasks), the runtime will also emit a `start` event for the specific task.
+With the generic `start` event emitted (for all tasks), the runtime will also emit a `start` event for the specific task.
 
 ```ts
 tachyon.on("start:echo-date", (task: Task) => {
@@ -135,7 +135,7 @@ tachyon.on("start:echo-date", (task: Task) => {
 ```
 
 ### success
-When a task is successfully runs the runtime will emit a `success` event with the task instance and the task's result as parameters.
+When a task finishes successfully the runtime will emit a `success` event with the task instance and the task's result as parameters.
 
 ```ts
 tachyon.on("success", (task: Task, result: any) => {
@@ -144,7 +144,7 @@ tachyon.on("success", (task: Task, result: any) => {
 ```
 
 ### success:[task]
-Following the pattern from the `start` event, the runtime will also emit a specific `success` for task.
+Following the pattern from the `start` event, the runtime will also emit a specific `success` event for task.
 
 ```ts
 tachyon.on("success:fetch-api", (task: Task, result: any) => {
@@ -153,7 +153,7 @@ tachyon.on("success:fetch-api", (task: Task, result: any) => {
 ```
 
 ### fail
-When a task fails the runtime will emit an `fail` event. **(this is the recommended way to handle task errors)**
+When a task fails the runtime will emit a `fail` event. **(this is the recommended way to handle task errors)**
 
 ```ts
 tachyon.on("fail", (task: Task, err: any) => {
@@ -162,7 +162,7 @@ tachyon.on("fail", (task: Task, err: any) => {
 ```
 
 ### fail:[task]
-Once again there is also a specific task `fail` event. **(this is the recommended way to handle task errors)**
+Once again there is also a `fail` event for a specific task. **(this is the recommended way to handle task errors)**
 
 ```ts
 tachyon.on("fail:fetch-api", (task: Task, result: any) => {
@@ -171,7 +171,7 @@ tachyon.on("fail:fetch-api", (task: Task, result: any) => {
 ```
 
 ### complete
-After a task is run and completes (success / fail) the runtime will emit an `complete` event for clean up purposes.
+After a task is run and finishes (success / fail) the runtime will emit a `complete` event for clean up purposes.
 
 ```ts
 tachyon.on("complete", (task: Task) => {
@@ -180,7 +180,7 @@ tachyon.on("complete", (task: Task) => {
 ```
 
 ### complete:[task]
-It gets boring now but the runtime will also emit an `complete` event for targeted events. 
+It gets boring now but the runtime will also emit a `complete` event for targeted tasks. 
 
 ```ts
 tachyon.on("complete:fetch-api", (task: Task) => {
