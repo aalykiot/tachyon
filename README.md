@@ -83,11 +83,9 @@ await tachyon.schedule("* * * * *", "print", { message: "this is a cron based ta
 > Timezones are not supported yet, but there coming eventually!
 
 ### create(name, [data], [options])
-Although the recommended way to register tasks is with the `now`, `every` and `schedule` methods, there is also the option to create tasks manually. (cool thing is you can chain *`task methods`* using it)
+Although the recommended way to register tasks is with the `now`, `every` and `schedule` methods, there is also the option to create tasks manually. (cool thing is you can chain *`task methods`* using this approach)
 
 ```ts
-// ONLY FOR ADVANCES USAGE
-
 // create `raw` task
 const task = create("send-email", "some@email.com")
   .interval("0 0 * * THU")
