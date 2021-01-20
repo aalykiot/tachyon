@@ -1,5 +1,5 @@
 // deno-lint-ignore-file ban-types no-explicit-any
-import { ExContext } from "./index.d.ts";
+import { ExContext } from "./types.ts";
 
 const promiseWithTimeout = (
   fn: Function,

@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { hash, mergeDeepRight, nanoid, validate } from "../deps.ts";
 import { Tachyon } from "./runtime.ts";
-import { ID, Options, TaskStats } from "./index.d.ts";
+import { ID, Options, TaskStats } from "./types.ts";
 import { nextDate } from "./utils/helpers.ts";
 
 const defaultOptions: Options = {

@@ -1,5 +1,5 @@
 // deno-lint-ignore-file ban-types no-explicit-any
-import { Config, ID, Stats } from "./index.d.ts";
+import { Config, ID, Stats } from "./types.ts";
 import { EventEmitter, mergeDeepRight, MongoClient } from "../deps.ts";
 import { Task } from "./task.ts";
 import { nextDate } from "./utils/helpers.ts";
